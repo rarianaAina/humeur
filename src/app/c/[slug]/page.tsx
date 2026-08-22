@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/Dashboard";
 import { loadCouple, touchCouple } from "@/lib/couple";
@@ -6,6 +7,16 @@ import { loadCouple, touchCouple } from "@/lib/couple";
 // Next.js ni chez un intermédiaire.
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
+
+/** Chaque espace pointe vers son propre manifeste — voir la route voisine. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  return { manifest: `/c/${encodeURIComponent(slug)}/manifest.webmanifest` };
+}
 
 export default async function SpacePage({
   params,

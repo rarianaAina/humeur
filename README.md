@@ -85,10 +85,21 @@ une page web déclarée comme app installable (manifeste + icônes).
   bouton Partager → *Sur l'écran d'accueil*.
 - **Android** — Chrome, menu ⋮ → *Installer l'application*.
 
-Elle s'ouvre alors en plein écran, sans barre d'adresse. L'icône démarre sur
-**la page depuis laquelle elle a été ajoutée** : il faut donc l'ajouter depuis
-son espace `/c/<slug>`, pas depuis l'accueil — c'est pour ça que le manifeste
-ne déclare pas de `start_url`.
+Elle s'ouvre alors en plein écran, sans barre d'adresse. Dans les deux cas,
+**il faut l'ajouter depuis son espace `/c/<slug>`**, pas depuis la page
+d'accueil.
+
+Les deux systèmes ne décident pas de la même façon d'où l'app démarre : iOS
+retient l'URL affichée au moment de l'ajout, Chrome suit le `start_url` du
+manifeste, littéralement. Un manifeste unique pour tout le site ferait donc
+ouvrir la page de création sur Android. D'où
+[`src/app/c/[slug]/manifest.webmanifest/route.ts`](src/app/c/%5Bslug%5D/manifest.webmanifest/route.ts) :
+chaque espace sert son propre manifeste, avec son `start_url` et un `scope`
+qui cantonne l'app installée à cet espace.
+
+Pas de service worker : Chrome n'en exige plus pour l'installation, et l'app
+n'a rien à offrir hors ligne — sans réseau, il n'y a pas d'état de l'autre à
+afficher.
 
 Deux choses à savoir sur iOS : l'app installée a longtemps eu un stockage
 distinct de Safari, donc le choix « qui es-tu ? » peut être redemandé une fois
