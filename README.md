@@ -76,6 +76,25 @@ mêmes variables (Production + Preview) et redéployer.
 > URL différente. Rien de grave, mais le lien à partager reste celui du
 > domaine de production.
 
+## Sur l'écran d'accueil du téléphone
+
+L'app s'installe sans passer par un store, et sans Tauri ni Capacitor : c'est
+une page web déclarée comme app installable (manifeste + icônes).
+
+- **iOS** — ouvrir l'espace dans **Safari** (Chrome iOS ne sait pas le faire),
+  bouton Partager → *Sur l'écran d'accueil*.
+- **Android** — Chrome, menu ⋮ → *Installer l'application*.
+
+Elle s'ouvre alors en plein écran, sans barre d'adresse. L'icône démarre sur
+**la page depuis laquelle elle a été ajoutée** : il faut donc l'ajouter depuis
+son espace `/c/<slug>`, pas depuis l'accueil — c'est pour ça que le manifeste
+ne déclare pas de `start_url`.
+
+Deux choses à savoir sur iOS : l'app installée a longtemps eu un stockage
+distinct de Safari, donc le choix « qui es-tu ? » peut être redemandé une fois
+dans l'app ; et une app retirée de l'écran d'accueil emporte son stockage — le
+lien de l'espace, lui, reste la seule chose à ne pas perdre.
+
 ## Structure
 
 ```
