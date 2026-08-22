@@ -12,6 +12,7 @@ import { isStale, timeAgo } from "@/lib/timeAgo";
 const TALK_TONE: Record<string, string> = {
   yes: "bg-yes/15 text-yes border-yes/30",
   maybe: "bg-maybe/15 text-maybe border-maybe/30",
+  quiet: "bg-quiet/15 text-quiet border-quiet/30",
   no: "bg-no/15 text-no border-no/30",
 };
 

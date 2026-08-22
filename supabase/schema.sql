@@ -24,7 +24,10 @@ create table if not exists public.states (
   -- Plusieurs humeurs peuvent coexister : on est rarement d'une seule pièce.
   moods       text[] not null default '{}',
   energy      smallint not null default 3 check (energy between 1 and 5),
-  talk        text not null default 'maybe' check (talk in ('yes', 'maybe', 'no')),
+  -- De la plus ouverte à la plus fermée. 'quiet' = pas envie de parler,
+  -- mais la présence est bienvenue ; 'no' = besoin d'un moment à soi.
+  talk        text not null default 'maybe'
+              check (talk in ('yes', 'maybe', 'quiet', 'no')),
   body        text[] not null default '{}',
   note        text check (char_length(note) <= 500),
   updated_at  timestamptz not null default now(),

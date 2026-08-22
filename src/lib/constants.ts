@@ -35,11 +35,18 @@ export const TALK_OPTIONS: {
     hint: "Je ne lance pas, mais je réponds volontiers.",
   },
   {
+    id: "quiet",
+    label: "Je n'ai pas envie de parler",
+    short: "Pas envie de parler",
+    emoji: "🤐",
+    hint: "Ta présence me va, c'est juste les mots qui ne viennent pas.",
+  },
+  {
     id: "no",
     label: "J'ai besoin de calme",
     short: "Besoin de calme",
     emoji: "🤫",
-    hint: "Ce n'est pas contre toi, j'ai juste besoin d'un moment.",
+    hint: "Ce n'est pas contre toi, j'ai juste besoin d'un moment à moi.",
   },
 ];
 

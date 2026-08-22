@@ -19,6 +19,7 @@
 
   --color-yes: var(--c-yes);
   --color-maybe: var(--c-maybe);
+  --color-quiet: var(--c-quiet);
   --color-no: var(--c-no);
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
@@ -39,6 +40,7 @@
 
   --c-yes: #3f6f4d;
   --c-maybe: #96652a;
+  --c-quiet: #4a6076;
   --c-no: #6a5b80;
 
   color-scheme: light;
@@ -59,6 +61,7 @@
 
     --c-yes: #86c093;
     --c-maybe: #dcae68;
+    --c-quiet: #94b0c9;
     --c-no: #b3a2cb;
 
     color-scheme: dark;

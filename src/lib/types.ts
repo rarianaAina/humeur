@@ -1,6 +1,7 @@
 export type Partner = "a" | "b";
 
-export type Talk = "yes" | "maybe" | "no";
+/** De la plus ouverte à la plus fermée. */
+export type Talk = "yes" | "maybe" | "quiet" | "no";
 
 export type PartnerState = {
   partner: Partner;
