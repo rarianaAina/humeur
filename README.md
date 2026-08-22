@@ -15,6 +15,9 @@ s'adapte, sans avoir à demander.
   partent automatiquement, 0,7 s après le dernier clic.
 - **Pas d'historique.** Une seule ligne par personne, écrasée à chaque mise à
   jour. C'est un état présent, pas un journal.
+- **Plusieurs humeurs à la fois**, parce qu'on est rarement d'une seule pièce :
+  fatiguée *et* amoureuse *et* à cran. Et si un mot manque, on l'ajoute — les
+  humeurs maison rejoignent la liste des deux partenaires.
 
 ## Sécurité — à lire avant de partager le lien
 
@@ -40,6 +43,10 @@ tout modifier. C'est le compromis assumé du « sans compte ». En pratique :
 Créer un projet sur [supabase.com](https://supabase.com), puis dans
 **SQL Editor → New query**, coller le contenu de
 [`supabase/schema.sql`](supabase/schema.sql) et l'exécuter.
+
+Sur une base déjà en service, appliquer à la place les fichiers de
+[`supabase/migrations/`](supabase/migrations/) dans l'ordre de leur numéro —
+ils sont écrits pour être rejouables sans dommage.
 
 Récupérer dans **Project Settings → API** :
 
@@ -79,6 +86,7 @@ src/app/api/couples/[slug]/route.ts  GET / POST / PATCH — lire, mettre à jour
 src/components/Dashboard.tsx         orchestration : identité, polling, écriture
 src/components/MyStateEditor.tsx     mon état, modifiable
 src/components/PartnerCard.tsx       l'état de l'autre, en lecture
+src/app/api/couples/[slug]/moods/     POST / DELETE — humeurs maison du couple
 src/lib/constants.ts                 humeurs, disponibilités, tags corporels
 src/lib/validate.ts                  validation des entrées côté serveur
 supabase/schema.sql                  tables, contraintes, verrouillage RLS

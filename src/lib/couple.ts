@@ -3,7 +3,13 @@ import { supabaseAdmin } from "./supabase";
 import type { CoupleView, Partner, PartnerState } from "./types";
 import { emptyState } from "./validate";
 
-type CoupleRow = { id: string; slug: string; name_a: string; name_b: string };
+type CoupleRow = {
+  id: string;
+  slug: string;
+  name_a: string;
+  name_b: string;
+  custom_moods: string[] | null;
+};
 type StateRow = Omit<PartnerState, "partner"> & { partner: Partner };
 
 /** Charge un espace par son slug secret, avec les deux états courants. */
@@ -14,7 +20,7 @@ export async function loadCouple(
 
   const { data: couple, error } = await db
     .from("couples")
-    .select("id, slug, name_a, name_b")
+    .select("id, slug, name_a, name_b, custom_moods")
     .eq("slug", slug)
     .maybeSingle<CoupleRow>();
 
@@ -26,7 +32,7 @@ export async function loadCouple(
 
   const { data: rows } = await db
     .from("states")
-    .select("partner, mood, energy, talk, body, note, updated_at")
+    .select("partner, moods, energy, talk, body, note, updated_at")
     .eq("couple_id", couple.id)
     .returns<StateRow[]>();
 
@@ -37,6 +43,7 @@ export async function loadCouple(
     view: {
       slug: couple.slug,
       names: { a: couple.name_a, b: couple.name_b },
+      customMoods: couple.custom_moods ?? [],
       states: {
         a: byPartner.get("a") ?? emptyState("a"),
         b: byPartner.get("b") ?? emptyState("b"),

@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import {
   BODY_TAGS,
   ENERGY_LABELS,
+  MOOD_LABEL_MAX,
   MOODS,
+  MOODS_MAX,
   NOTE_MAX,
   TALK_OPTIONS,
+  moodDisplay,
 } from "@/lib/constants";
 import type { PartnerState } from "@/lib/types";
 import { timeAgo } from "@/lib/timeAgo";
@@ -23,14 +27,48 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 export function MyStateEditor({
   name,
   state,
+  customMoods,
   status,
   onChange,
+  onAddMood,
+  onRemoveMood,
 }: {
   name: string;
   state: PartnerState;
+  customMoods: string[];
   status: SaveStatus;
   onChange: (patch: Partial<PartnerState>) => void;
+  onAddMood: (label: string) => Promise<string | null>;
+  onRemoveMood: (mood: string) => void;
 }) {
+  const [newMood, setNewMood] = useState("");
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  function toggleMood(id: string) {
+    const selected = state.moods.includes(id);
+    if (!selected && state.moods.length >= MOODS_MAX) return;
+    onChange({
+      moods: selected
+        ? state.moods.filter((m) => m !== id)
+        : [...state.moods, id],
+    });
+  }
+
+  async function submitNewMood(e: React.FormEvent) {
+    e.preventDefault();
+    const label = newMood.trim();
+    if (!label || adding) return;
+
+    setAdding(true);
+    setMoodError(null);
+    const error = await onAddMood(label);
+    setAdding(false);
+
+    if (error) setMoodError(error);
+    else setNewMood("");
+  }
+
   function toggleBodyTag(id: string) {
     onChange({
       body: state.body.includes(id)
@@ -56,19 +94,19 @@ export function MyStateEditor({
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-muted">
-          Comment je me sens
+          Comment je me sens{" "}
+          <span className="font-normal">— autant que nécessaire</span>
         </legend>
+
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {MOODS.map((mood) => {
-            const selected = state.mood === mood.id;
+            const selected = state.moods.includes(mood.id);
             return (
               <button
                 key={mood.id}
                 type="button"
                 aria-pressed={selected}
-                onClick={() =>
-                  onChange({ mood: selected ? null : mood.id })
-                }
+                onClick={() => toggleMood(mood.id)}
                 className={`flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-left text-sm transition ${
                   selected
                     ? "border-mine bg-mine text-white"
@@ -83,6 +121,77 @@ export function MyStateEditor({
             );
           })}
         </div>
+
+        {customMoods.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {customMoods.map((id) => {
+              const mood = moodDisplay(id);
+              if (!mood) return null;
+              const selected = state.moods.includes(id);
+              return (
+                <span
+                  key={id}
+                  className={`flex items-center rounded-full border transition ${
+                    selected
+                      ? "border-mine bg-mine text-white"
+                      : "border-line bg-card"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleMood(id)}
+                    className="max-w-52 truncate py-1.5 pl-3.5 pr-1.5 text-sm"
+                  >
+                    {mood.label}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveMood(id)}
+                    aria-label={`Retirer l'humeur ${mood.label} de la liste`}
+                    title="Retirer de la liste"
+                    className="py-1.5 pl-1 pr-3 text-sm opacity-60 hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        <form onSubmit={submitNewMood} className="flex gap-2">
+          <input
+            value={newMood}
+            maxLength={MOOD_LABEL_MAX}
+            onChange={(e) => {
+              setNewMood(e.target.value);
+              setMoodError(null);
+            }}
+            placeholder="Une humeur qui manque…"
+            aria-label="Ajouter une humeur à la liste"
+            className="min-w-0 flex-1 rounded-full border border-line bg-card px-4 py-2 text-sm outline-none focus:border-mine focus:ring-2 focus:ring-mine/40"
+          />
+          <button
+            type="submit"
+            disabled={!newMood.trim() || adding}
+            className="shrink-0 rounded-full border border-line bg-card px-4 py-2 text-sm font-medium transition hover:border-mine disabled:opacity-40"
+          >
+            {adding ? "…" : "Ajouter"}
+          </button>
+        </form>
+
+        {moodError && (
+          <p role="alert" className="text-sm text-mine">
+            {moodError}
+          </p>
+        )}
+        {state.moods.length >= MOODS_MAX && (
+          <p className="text-sm text-muted">
+            Maximum atteint ({MOODS_MAX}). Décoche une humeur pour en choisir
+            une autre.
+          </p>
+        )}
       </fieldset>
 
       <div className="space-y-3">

@@ -5,12 +5,15 @@
 
 -- Un espace partagé par couple, identifié par un slug secret (128 bits).
 create table if not exists public.couples (
-  id          uuid primary key default gen_random_uuid(),
-  slug        text not null unique,
-  name_a      text not null default 'Partenaire A',
-  name_b      text not null default 'Partenaire B',
-  created_at  timestamptz not null default now(),
-  seen_at     timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  slug          text not null unique,
+  name_a        text not null default 'Partenaire A',
+  name_b        text not null default 'Partenaire B',
+  -- Humeurs inventées par le couple, partagées entre les deux partenaires.
+  -- Identifiant de la forme « custom:<libellé> ».
+  custom_moods  text[] not null default '{}',
+  created_at    timestamptz not null default now(),
+  seen_at       timestamptz not null default now()
 );
 
 -- L'état courant de chaque partenaire. Une seule ligne par (couple, partenaire) :
@@ -18,7 +21,8 @@ create table if not exists public.couples (
 create table if not exists public.states (
   couple_id   uuid not null references public.couples(id) on delete cascade,
   partner     text not null check (partner in ('a', 'b')),
-  mood        text,
+  -- Plusieurs humeurs peuvent coexister : on est rarement d'une seule pièce.
+  moods       text[] not null default '{}',
   energy      smallint not null default 3 check (energy between 1 and 5),
   talk        text not null default 'maybe' check (talk in ('yes', 'maybe', 'no')),
   body        text[] not null default '{}',

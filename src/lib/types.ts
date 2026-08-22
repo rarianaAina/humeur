@@ -4,7 +4,8 @@ export type Talk = "yes" | "maybe" | "no";
 
 export type PartnerState = {
   partner: Partner;
-  mood: string | null;
+  /** Identifiants d'humeurs : presets, ou « custom:<libellé> ». */
+  moods: string[];
   energy: number;
   talk: Talk;
   body: string[];
@@ -15,5 +16,7 @@ export type PartnerState = {
 export type CoupleView = {
   slug: string;
   names: Record<Partner, string>;
+  /** Humeurs inventées par le couple, proposées aux deux partenaires. */
+  customMoods: string[];
   states: Record<Partner, PartnerState>;
 };

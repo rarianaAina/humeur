@@ -45,7 +45,7 @@ export async function POST(req: Request, { params }: Ctx) {
     );
   }
 
-  const patch = parseStatePatch(payload);
+  const patch = parseStatePatch(payload, couple.view.customMoods);
   if ("error" in patch) {
     return NextResponse.json({ error: patch.error }, { status: 400 });
   }

@@ -3,7 +3,7 @@
 import {
   bodyTagById,
   ENERGY_LABELS,
-  moodById,
+  moodDisplay,
   talkById,
 } from "@/lib/constants";
 import type { PartnerState } from "@/lib/types";
@@ -23,7 +23,9 @@ export function PartnerCard({
   name: string;
   state: PartnerState;
 }) {
-  const mood = moodById(state.mood);
+  const moods = state.moods
+    .map(moodDisplay)
+    .filter((m): m is NonNullable<typeof m> => m !== null);
   const talk = talkById(state.talk);
   const stale = isStale(state.updated_at);
 
@@ -44,18 +46,34 @@ export function PartnerCard({
         </p>
       )}
 
-      <div className="flex items-center gap-4">
-        <span className="text-5xl leading-none" aria-hidden>
-          {mood?.emoji ?? "…"}
-        </span>
-        <div>
-          <p className="text-2xl font-medium">
-            {mood?.label ?? "Rien d'indiqué"}
-          </p>
-          <p className="text-sm text-muted">
-            Énergie : {ENERGY_LABELS[state.energy]} ({state.energy}/5)
-          </p>
-        </div>
+      <div className="space-y-3">
+        {moods.length === 0 ? (
+          <div className="flex items-center gap-4">
+            <span className="text-5xl leading-none" aria-hidden>
+              …
+            </span>
+            <p className="text-2xl font-medium">Rien d&apos;indiqué</p>
+          </div>
+        ) : (
+          <ul className="flex flex-wrap items-center gap-2">
+            {moods.map((mood) => (
+              <li
+                key={mood.id}
+                className="flex items-center gap-2 rounded-2xl bg-card px-3 py-2 text-lg font-medium"
+              >
+                {mood.emoji && (
+                  <span className="text-2xl leading-none" aria-hidden>
+                    {mood.emoji}
+                  </span>
+                )}
+                <span>{mood.label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-sm text-muted">
+          Énergie : {ENERGY_LABELS[state.energy]} ({state.energy}/5)
+        </p>
       </div>
 
       {talk && (

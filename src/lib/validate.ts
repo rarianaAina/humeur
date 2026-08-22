@@ -1,4 +1,15 @@
-import { BODY_TAGS, MOODS, NOTE_MAX, TALK_OPTIONS } from "./constants";
+import {
+  BODY_TAGS,
+  CUSTOM_MOOD_PREFIX,
+  CUSTOM_MOODS_MAX,
+  MOOD_LABEL_MAX,
+  MOODS,
+  MOODS_MAX,
+  NOTE_MAX,
+  TALK_OPTIONS,
+  customMoodId,
+  isCustomMood,
+} from "./constants";
 import type { Partner, PartnerState, Talk } from "./types";
 
 const MOOD_IDS = new Set<string>(MOODS.map((m) => m.id));
@@ -10,7 +21,7 @@ export function isPartner(value: unknown): value is Partner {
 }
 
 export type StatePatch = {
-  mood: string | null;
+  moods: string[];
   energy: number;
   talk: Talk;
   body: string[];
@@ -22,17 +33,30 @@ export type StatePatch = {
  * corriger silencieusement, sauf pour les listes où l'on filtre les inconnus :
  * un tag obsolète venant d'un onglet resté ouvert ne doit pas bloquer la
  * mise à jour du reste.
+ *
+ * `knownCustomMoods` vient du couple : une humeur personnalisée n'est
+ * acceptable que si elle a d'abord été créée via /moods.
  */
-export function parseStatePatch(input: unknown): StatePatch | { error: string } {
+export function parseStatePatch(
+  input: unknown,
+  knownCustomMoods: string[],
+): StatePatch | { error: string } {
   if (typeof input !== "object" || input === null) {
     return { error: "Corps de requête invalide." };
   }
   const body = input as Record<string, unknown>;
 
-  const mood =
-    body.mood === null || body.mood === undefined ? null : String(body.mood);
-  if (mood !== null && !MOOD_IDS.has(mood)) {
-    return { error: `Humeur inconnue : ${mood}` };
+  const rawMoods = Array.isArray(body.moods) ? body.moods : [];
+  const custom = new Set(knownCustomMoods);
+  const moods = Array.from(
+    new Set(
+      rawMoods
+        .map(String)
+        .filter((m) => (isCustomMood(m) ? custom.has(m) : MOOD_IDS.has(m))),
+    ),
+  );
+  if (moods.length > MOODS_MAX) {
+    return { error: `Pas plus de ${MOODS_MAX} humeurs à la fois.` };
   }
 
   const energy = Number(body.energy);
@@ -59,13 +83,55 @@ export function parseStatePatch(input: unknown): StatePatch | { error: string } 
     note = trimmed.length > 0 ? trimmed : null;
   }
 
-  return { mood, energy, talk: talk as Talk, body: bodyTags, note };
+  return { moods, energy, talk: talk as Talk, body: bodyTags, note };
+}
+
+/**
+ * Valide le libellé d'une humeur à créer et renvoie son identifiant.
+ * Le doublon n'est pas une erreur : on renvoie l'identifiant existant, pour
+ * que l'appelant puisse simplement la cocher.
+ */
+export function parseNewMood(
+  input: unknown,
+  existing: string[],
+): { id: string; alreadyThere: boolean } | { error: string } {
+  const label =
+    typeof input === "string" ? input.trim().replace(/\s+/g, " ") : "";
+
+  if (!label) return { error: "Écris d'abord un nom d'humeur." };
+  if (label.length > MOOD_LABEL_MAX) {
+    return { error: `${MOOD_LABEL_MAX} caractères maximum.` };
+  }
+
+  // Une humeur maison ne doit pas doublonner un preset : sinon la même chose
+  // apparaîtrait deux fois dans la liste, sous deux libellés voisins.
+  const folded = label.toLocaleLowerCase("fr");
+  const preset = MOODS.find(
+    (m) => m.label.toLocaleLowerCase("fr") === folded || m.id === folded,
+  );
+  if (preset) {
+    return { error: `« ${preset.label} » est déjà dans la liste.` };
+  }
+
+  const twin = existing.find(
+    (id) =>
+      id.slice(CUSTOM_MOOD_PREFIX.length).toLocaleLowerCase("fr") === folded,
+  );
+  if (twin) return { id: twin, alreadyThere: true };
+
+  if (existing.length >= CUSTOM_MOODS_MAX) {
+    return {
+      error: `Vous avez déjà ${CUSTOM_MOODS_MAX} humeurs à vous. Supprimes-en une pour en ajouter.`,
+    };
+  }
+
+  return { id: customMoodId(label), alreadyThere: false };
 }
 
 export function emptyState(partner: Partner): PartnerState {
   return {
     partner,
-    mood: null,
+    moods: [],
     energy: 3,
     talk: "maybe",
     body: [],

@@ -123,7 +123,7 @@ export function Dashboard({ initial }: { initial: CoupleView }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           partner: me,
-          mood: current.mood,
+          moods: current.moods,
           energy: current.energy,
           talk: current.talk,
           body: current.body,
@@ -171,6 +171,67 @@ export function Dashboard({ initial }: { initial: CoupleView }) {
     };
   }, []);
 
+  /**
+   * Crée une humeur maison puis la coche aussitôt. Renvoie un message
+   * d'erreur à afficher sous le champ, ou null si tout s'est bien passé.
+   */
+  const addMood = useCallback(
+    async (label: string): Promise<string | null> => {
+      try {
+        const res = await fetch(`/api/couples/${slug}/moods`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label }),
+        });
+        const payload = (await res.json()) as {
+          mood?: string;
+          couple?: CoupleView;
+          error?: string;
+        };
+        if (!res.ok || !payload.mood) {
+          return payload.error ?? "Ajout impossible.";
+        }
+
+        if (payload.couple) setView(payload.couple);
+
+        const mood = payload.mood;
+        const current = draftRef.current;
+        if (current && !current.moods.includes(mood)) {
+          onChange({ moods: [...current.moods, mood] });
+        }
+        return null;
+      } catch {
+        return "Ajout impossible — vérifie ta connexion.";
+      }
+    },
+    [onChange, slug],
+  );
+
+  /** Retire une humeur maison de la liste du couple, et des deux états. */
+  const removeMood = useCallback(
+    async (mood: string) => {
+      // On la décoche localement d'abord : le serveur fera de même, mais
+      // l'écran ne doit pas continuer à l'afficher entre-temps.
+      const current = draftRef.current;
+      if (current?.moods.includes(mood)) {
+        const next = current.moods.filter((m) => m !== mood);
+        draftRef.current = { ...current, moods: next };
+        setDraft((d) => (d ? { ...d, moods: next } : d));
+      }
+      try {
+        const res = await fetch(`/api/couples/${slug}/moods`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mood }),
+        });
+        if (res.ok) setView((await res.json()) as CoupleView);
+      } catch {
+        // Le prochain rafraîchissement remettra la liste d'aplomb.
+      }
+    },
+    [slug],
+  );
+
   const rename = useCallback(
     async (names: Record<Partner, string>) => {
       try {
@@ -209,8 +270,11 @@ export function Dashboard({ initial }: { initial: CoupleView }) {
           <MyStateEditor
             name={view.names[me]}
             state={draft}
+            customMoods={view.customMoods}
             status={status}
             onChange={onChange}
+            onAddMood={addMood}
+            onRemoveMood={removeMood}
           />
         )}
       </div>
